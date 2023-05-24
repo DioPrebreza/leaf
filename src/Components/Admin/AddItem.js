@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import uuid from "react-uuid";
 import { useFirestore } from "../../hooks/useFirestore";
 import { useHistory } from "react-router-dom";
 import { useImageUpload } from "../../hooks/useImageUpload";
-import { upload } from "@testing-library/user-event/dist/upload";
+import { projectStorage } from "../../firebase/config";
 
 const AddItem = () => {
   const history = useHistory();
@@ -40,16 +41,26 @@ const AddItem = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // generate random uuid for the item
+    const itemId = uuid();
+
+    // upload image to the database
+    const uploadPath = `images/${itemId}/${imageUpload.name}`;
+    const img = await projectStorage.ref(uploadPath).put(imageUpload);
+    const imgUrl = await img.ref.getDownloadURL();
+
     const item = {
+      itemId,
       perfumeName,
       price,
       brand,
+      imgUrl,
     };
 
     console.log(item);
     console.log(imageUpload);
 
-    uploadImage(imageUpload);
+    // uploadImage(imageUpload, itemId);
     await addDocument(item);
     if (!response.error) {
       history.push("/");
